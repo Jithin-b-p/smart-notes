@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: smart-notes-postgres
+    environment:
+      POSTGRES_DB: smartnotes
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - smart-notes-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d smartnotes"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7-alphine
+    container_name: smart-notes-redis
+    ports:
+      - "6379:6379"
+    volumes: -redis_data:/data
+    networks:
+      - smart-notes-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  smart-notes-network:
+    driver: bridge
