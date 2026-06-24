@@ -23,6 +23,7 @@
     "@commitlint/config-conventional": "^21.0.2",
     "commitizen": "^4.3.2",
     "cz-conventional-changelog": "^3.3.0",
+    "eslint": "^9.39.4",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.7",
     "prettier": "^3.8.4"
@@ -34,7 +35,7 @@
   },
   "lint-staged": {
     "apps/backend/**/*.ts": [
-      "eslint --fix",
+      "pnpm --filter backend lint",
       "prettier --write"
     ],
     "apps/frontend/**/*.{ts,tsx}": [
