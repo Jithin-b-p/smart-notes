@@ -22,11 +22,12 @@ services:
       start_period: 10s
 
   redis:
-    image: redis:7-alphine
+    image: redis:7-alpine
     container_name: smart-notes-redis
     ports:
       - "6379:6379"
-    volumes: -redis_data:/data
+    volumes:
+      - redis_data:/data
     networks:
       - smart-notes-network
     healthcheck:

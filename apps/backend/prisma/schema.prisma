@@ -1,0 +1,147 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String?          
+  googleId  String?  @unique
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  notes         Note[]
+  folders       Folder[]
+  tags          Tag[]
+  refreshTokens RefreshToken[]
+
+  @@index([email])
+  @@map("users")
+}
+
+
+model Note {
+  id         String   @id @default(cuid())
+  title      String   @default("Untitled")
+  content    String   @db.Text
+  plainText  String   @db.Text @default("")
+  isPinned   Boolean  @default(false)
+  isArchived Boolean  @default(false)
+  shareToken String?  @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  userId   String
+  folderId String?
+
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folder      Folder?       @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  tags        TagsOnNotes[]
+  versions    NoteVersion[]
+  attachments Attachment[]
+
+  @@index([userId])
+  @@index([userId, isArchived])
+  @@index([userId, folderId])
+  @@index([shareToken])
+  @@map("notes")
+}
+
+model Folder {
+  id       String @id @default(cuid())
+  name     String
+  color    String @default("#6366f1")
+  userId   String
+  parentId String?
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent   Folder?  @relation("FolderChildren", fields: [parentId], references: [id])
+  children Folder[] @relation("FolderChildren")
+  notes    Note[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([parentId])
+  @@map("folders")
+}
+
+model Tag {
+  id     String @id @default(cuid())
+  name   String
+  color  String @default("#6366f1")
+  userId String
+
+  user  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notes TagsOnNotes[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, userId])
+  @@index([userId])
+  @@map("tags")
+}
+
+model TagsOnNotes {
+  noteId    String
+  tagId     String
+  createdAt DateTime @default(now())
+
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([noteId, tagId])
+  @@map("tags_on_notes")
+}
+
+model NoteVersion {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  noteId    String
+
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@index([noteId])
+  @@map("note_versions")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique    
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Attachment {
+  id        String   @id @default(cuid())
+  url       String
+  key       String   @unique  
+  name      String
+  size      Int
+  mimeType  String
+  noteId    String
+  createdAt DateTime @default(now())
+
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@index([noteId])
+  @@map("attachments")
+}
